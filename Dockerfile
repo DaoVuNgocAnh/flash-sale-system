@@ -30,6 +30,11 @@ FROM node:18-alpine AS runner
 
 WORKDIR /app
 
+# Phải khai báo lại ARG vì nó không tự truyền từ builder sang
+ARG APP_NAME
+# Gán nó vào biến môi trường (ENV) để lệnh CMD bên dưới đọc được
+ENV APP_NAME=${APP_NAME}
+
 # Copy từ bước builder sang
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
