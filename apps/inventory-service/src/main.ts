@@ -4,6 +4,12 @@ import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { Partitioners } from 'kafkajs';
 
 async function bootstrap() {
+  // --- THÊM ĐOẠN NÀY ---
+  console.log("========================================");
+  console.log("DEBUG: KAFKA_BROKERS =", process.env.KAFKA_BROKERS);
+  console.log("DEBUG: USING BROKER =", process.env.KAFKA_BROKERS ?? 'localhost:9092');
+  console.log("========================================");
+  // ---------------------
   const app = await NestFactory.create(InventoryServiceModule);
   
   // 1. Kết nối thêm Kafka (Microservice)
