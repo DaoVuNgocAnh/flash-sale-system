@@ -1,0 +1,91 @@
+services:
+  # -----------------------------------
+  # 1. DATABASE GROUP
+  # -----------------------------------
+  postgres:
+    image: postgres:18
+    container_name: flash_sale_postgres
+    ports:
+      - "5450:5432"
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: flash_sale_db
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data_new:/var/lib/postgresql/data
+    networks:
+      - flash-sale-network
+
+  redis:
+    image: redis:alpine
+    container_name: flash_sale_redis
+    ports:
+      - "6379:6379"
+    networks:
+      - flash-sale-network
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: flash_sale_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    networks:
+      - flash-sale-network
+
+  # -----------------------------------
+  # 2. KAFKA GROUP (Image Apache Chính chủ - KRaft Mode)
+  # -----------------------------------
+  kafka:
+    image: apache/kafka:3.7.0
+    container_name: flash_sale_kafka
+    ports:
+      - "9092:9092"
+    environment:
+      # Cấu hình chế độ KRaft (Không dùng Zookeeper)
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      # QUAN TRỌNG: Cấu hình 2 đường tiếng
+      # - INTERNAL: Cổng 29092 (Dành cho Kafka UI và các container khác)
+      # - EXTERNAL: Cổng 9092 (Dành cho máy tính của bạn - localhost)
+      # - CONTROLLER: Cổng 9093 (Dành cho nội bộ Kafka quản lý nhau)
+      KAFKA_LISTENERS: INTERNAL://0.0.0.0:29092,EXTERNAL://0.0.0.0:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:29092,EXTERNAL://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      # Các cấu hình tối ưu cho dev local
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_NUM_PARTITIONS: 3
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    networks:
+      - flash-sale-network
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: flash_sale_kafka_ui
+    depends_on:
+      - kafka
+    ports:
+      - "8090:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+    networks:
+      - flash-sale-network
+
+volumes:
+  postgres_data_new:
+
+networks:
+  flash-sale-network:
+    driver: bridge

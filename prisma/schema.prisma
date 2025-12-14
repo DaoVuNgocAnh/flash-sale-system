@@ -1,0 +1,96 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String    @id @default(uuid()) 
+  email     String    @unique
+  password  String
+  name      String?
+  role      String    @default("USER")
+
+  // THÊM DÒNG NÀY: Lưu refresh token (đã mã hóa)
+  hashedRefreshToken String?
+  
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  
+  // Xóa mềm: Nếu null -> chưa xóa. 
+  deletedAt DateTime? 
+
+  orders    Order[]
+
+  @@map("users") // Đổi tên bảng trong DB thành số nhiều cho chuẩn
+}
+
+model Product {
+  id          String    @id @default(uuid())
+  name        String
+  description String?
+  price       Decimal   @db.Decimal(10, 2)
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime? // Xóa mềm sản phẩm (ngừng kinh doanh)
+
+  inventory   Inventory?
+  orderItems  OrderItem[]
+
+  @@map("products")
+}
+
+model Inventory {
+  id        String   @id @default(uuid())
+  
+  productId String   @unique 
+  product   Product  @relation(fields: [productId], references: [id])
+  
+  quantity  Int
+  updatedAt DateTime @updatedAt
+
+  @@map("inventories")
+}
+
+model Order {
+  id        String    @id @default(uuid())
+  
+  userId    String    
+  user      User      @relation(fields: [userId], references: [id])
+  
+  status    String    @default("PENDING")
+  total     Decimal   @db.Decimal(10, 2)
+  
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt // Đơn hàng cũng cần biết lúc cập nhật trạng thái
+
+  items     OrderItem[]
+
+  @@map("orders")
+}
+
+// Bảng trung gian
+model OrderItem {
+  id        String  @id @default(uuid())
+  
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id])
+  
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  
+  price     Decimal @db.Decimal(10, 2)
+  quantity  Int
+
+  @@map("order_items")
+}
