@@ -11,7 +11,7 @@ async function bootstrap() {
     transport: Transport.KAFKA,
     options: {
       client: {
-        brokers: ['localhost:9092'], // Kết nối đến Kafka Docker đang chạy
+        brokers: [process.env.KAFKA_BROKERS ?? 'localhost:9092'], // Kết nối đến Kafka Docker đang chạy
       },
       consumer: {
         groupId: 'inventory-consumer', // Định danh nhóm xử lý (quan trọng)

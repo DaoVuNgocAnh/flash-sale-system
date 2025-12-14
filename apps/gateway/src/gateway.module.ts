@@ -28,7 +28,7 @@ import { Partitioners } from 'kafkajs';
         options: {
           client: {
             clientId: 'gateway',
-            brokers: ['localhost:9092'],
+            brokers: [process.env.KAFKA_BROKERS ?? 'localhost:9092'],
           },
           consumer: {
             groupId: 'gateway-consumer',

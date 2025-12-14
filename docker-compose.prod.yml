@@ -1,0 +1,25 @@
+services:
+  # 1. GATEWAY (Lấy từ trên mạng về)
+  gateway:
+    image: ngocanhdao/flash-sale-gateway:latest
+    ports:
+      - "4000:3000" # Map ra cổng 4000
+    env_file: .env.docker
+    environment:
+      # Sửa lại đích đến của Proxy (Trỏ về máy thật)
+      - AUTH_SERVICE_URL=http://host.docker.internal:3001 
+      - INVENTORY_SERVICE_URL=http://host.docker.internal:3002
+
+  # 2. AUTH (Lấy từ trên mạng về)
+  auth-service:
+    image: ngocanhdao/flash-sale-auth-service:latest
+    ports:
+      - "4001:3001"
+    env_file: .env.docker
+
+  # 3. INVENTORY (Lấy từ trên mạng về)
+  inventory-service:
+    image: ngocanhdao/flash-sale-inventory-service:latest
+    ports:
+      - "4002:3002"
+    env_file: .env.docker
